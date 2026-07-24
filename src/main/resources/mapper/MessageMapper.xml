@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.campustrade.mapper.MessageMapper">
+
+    <!--
+        messagesテーブルのカラムと
+        Messageクラスのフィールドを対応付ける
+    -->
+    <resultMap id="MessageResultMap"
+               type="com.example.campustrade.entity.Message">
+
+        <id property="id"
+            column="id"/>
+
+        <result property="productId"
+                column="product_id"/>
+
+        <result property="senderId"
+                column="sender_id"/>
+
+        <result property="receiverId"
+                column="receiver_id"/>
+
+        <result property="content"
+                column="content"/>
+
+        <result property="createdAt"
+                column="created_at"/>
+
+    </resultMap>
+
+
+    <!--
+        メッセージIDからメッセージを1件取得
+    -->
+    <select id="findById"
+            resultMap="MessageResultMap">
+
+        SELECT
+            id,
+            product_id,
+            sender_id,
+            receiver_id,
+            content,
+            created_at
+        FROM messages
+        WHERE id = #{id}
+
+    </select>
+
+
+    <!--
+        商品IDからメッセージ一覧を取得
+
+        receiver_idがNULLの場合：
+        公開Q&Aとして扱う
+
+        receiver_idがNULLではない場合：
+        取引メッセージとして扱う
+
+        ここでは商品に紐づくすべてのメッセージを
+        作成日時の古い順に取得する
+    -->
+    <select id="findByProductId"
+            resultMap="MessageResultMap">
+
+        SELECT
+            id,
+            product_id,
+            sender_id,
+            receiver_id,
+            content,
+            created_at
+        FROM messages
+        WHERE product_id = #{productId}
+        ORDER BY created_at ASC
+
+    </select>
+
+
+    <!--
+        取引中の2人の非公開メッセージを取得
+
+        userIdとotherUserIdのどちらが
+        sender / receiverになっていても取得できるようにする
+    -->
+    <select id="findPrivateMessages"
+            resultMap="MessageResultMap">
+
+        SELECT
+            id,
+            product_id,
+            sender_id,
+            receiver_id,
+            content,
+            created_at
+        FROM messages
+        WHERE product_id = #{productId}
+
+          AND receiver_id IS NOT NULL
+
+          AND (
+                (
+                    sender_id = #{userId}
+                    AND receiver_id = #{otherUserId}
+                )
+                OR
+                (
+                    sender_id = #{otherUserId}
+                    AND receiver_id = #{userId}
+                )
+              )
+
+        ORDER BY created_at ASC
+
+    </select>
+
+
+    <!--
+        自分が送信したメッセージを取得
+    -->
+    <select id="findBySenderId"
+            resultMap="MessageResultMap">
+
+        SELECT
+            id,
+            product_id,
+            sender_id,
+            receiver_id,
+            content,
+            created_at
+        FROM messages
+        WHERE sender_id = #{senderId}
+        ORDER BY created_at DESC
+
+    </select>
+
+
+    <!--
+        自分が受信したメッセージを取得
+    -->
+    <select id="findByReceiverId"
+            resultMap="MessageResultMap">
+
+        SELECT
+            id,
+            product_id,
+            sender_id,
+            receiver_id,
+            content,
+            created_at
+        FROM messages
+        WHERE receiver_id = #{receiverId}
+        ORDER BY created_at DESC
+
+    </select>
+
+
+    <!--
+        メッセージを新規登録
+
+        公開Q&Aの場合
+            receiver_id = NULL
+
+        非公開取引メッセージの場合
+            receiver_id = 相手ユーザーID
+    -->
+    <insert id="insert"
+            parameterType="com.example.campustrade.entity.Message"
+            useGeneratedKeys="true"
+            keyProperty="id"
+            keyColumn="id">
+
+        INSERT INTO messages (
+            product_id,
+            sender_id,
+            receiver_id,
+            content
+        )
+        VALUES (
+            #{productId},
+            #{senderId},
+            #{receiverId},
+            #{content}
+        )
+
+    </insert>
+
+
+    <!--
+        メッセージを削除
+    -->
+    <delete id="delete">
+
+        DELETE FROM messages
+        WHERE id = #{id}
+
+    </delete>
+
+</mapper>

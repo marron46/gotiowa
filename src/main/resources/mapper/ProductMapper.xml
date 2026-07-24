@@ -1,0 +1,438 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.campustrade.mapper.ProductMapper">
+
+    <!--
+        productsテーブルのカラムと
+        Productクラスのフィールドを対応付ける
+    -->
+    <resultMap id="ProductResultMap"
+               type="com.example.campustrade.entity.Product">
+
+        <id property="productId"
+            column="product_id"/>
+
+        <result property="sellerId"
+                column="seller_id"/>
+
+        <result property="purchaserId"
+                column="purchaser_id"/>
+
+        <result property="productName"
+                column="product_name"/>
+
+        <result property="description"
+                column="description"/>
+
+        <result property="price"
+                column="price"/>
+
+        <result property="pCondition"
+                column="p_condition"/>
+
+        <result property="categoryId"
+                column="category_id"/>
+
+        <result property="status"
+                column="status"/>
+
+        <result property="imagePath"
+                column="image_path"/>
+
+        <result property="isBanned"
+                column="is_banned"/>
+
+        <result property="createdAt"
+                column="created_at"/>
+
+        <result property="updatedAt"
+                column="updated_at"/>
+
+    </resultMap>
+
+
+    <!--
+        商品IDから商品を検索
+    -->
+    <select id="findById"
+            resultMap="ProductResultMap">
+
+        SELECT
+            product_id,
+            seller_id,
+            purchaser_id,
+            product_name,
+            description,
+            price,
+            p_condition,
+            category_id,
+            status,
+            image_path,
+            is_banned,
+            created_at,
+            updated_at
+        FROM products
+        WHERE product_id = #{productId}
+
+    </select>
+
+
+    <!--
+        すべての商品を新着順で取得
+    -->
+    <select id="findAll"
+            resultMap="ProductResultMap">
+
+        SELECT
+            product_id,
+            seller_id,
+            purchaser_id,
+            product_name,
+            description,
+            price,
+            p_condition,
+            category_id,
+            status,
+            image_path,
+            is_banned,
+            created_at,
+            updated_at
+        FROM products
+        ORDER BY created_at DESC
+
+    </select>
+
+
+    <!--
+        販売中の商品だけを取得
+        禁止商品は除外する
+    -->
+    <select id="findOpenProducts"
+            resultMap="ProductResultMap">
+
+        SELECT
+            product_id,
+            seller_id,
+            purchaser_id,
+            product_name,
+            description,
+            price,
+            p_condition,
+            category_id,
+            status,
+            image_path,
+            is_banned,
+            created_at,
+            updated_at
+        FROM products
+        WHERE status = 'OPEN'
+          AND is_banned = FALSE
+        ORDER BY created_at DESC
+
+    </select>
+
+
+    <!--
+        商品検索
+
+        keyword：
+        商品名または説明文を検索
+
+        categoryId：
+        カテゴリ指定
+
+        keywordとcategoryIdの両方が指定された場合は
+        両方の条件で検索する
+    -->
+    <select id="search"
+            resultMap="ProductResultMap">
+
+        SELECT
+            product_id,
+            seller_id,
+            purchaser_id,
+            product_name,
+            description,
+            price,
+            p_condition,
+            category_id,
+            status,
+            image_path,
+            is_banned,
+            created_at,
+            updated_at
+        FROM products
+
+        <where>
+
+            <!-- 販売中の商品だけを検索 -->
+            status = 'OPEN'
+
+            <!-- 禁止商品を除外 -->
+            AND is_banned = FALSE
+
+            <!-- キーワード検索 -->
+            <if test="keyword != null and keyword != ''">
+
+                AND (
+                    product_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR description LIKE CONCAT('%', #{keyword}, '%')
+                )
+
+            </if>
+
+            <!-- カテゴリ検索 -->
+            <if test="categoryId != null">
+
+                AND category_id = #{categoryId}
+
+            </if>
+
+        </where>
+
+        ORDER BY created_at DESC
+
+    </select>
+
+
+    <!--
+        商品を新規登録
+    -->
+    <insert id="insert"
+            parameterType="com.example.campustrade.entity.Product"
+            useGeneratedKeys="true"
+            keyProperty="productId"
+            keyColumn="product_id">
+
+        INSERT INTO products (
+            seller_id,
+            purchaser_id,
+            product_name,
+            description,
+            price,
+            p_condition,
+            category_id,
+            status,
+            image_path,
+            is_banned
+        )
+        VALUES (
+            #{sellerId},
+            #{purchaserId},
+            #{productName},
+            #{description},
+            #{price},
+            #{pCondition},
+            #{categoryId},
+            'OPEN',
+            #{imagePath},
+            FALSE
+        )
+
+    </insert>
+
+
+    <!--
+        商品情報を更新
+    -->
+    <update id="update"
+            parameterType="com.example.campustrade.entity.Product">
+
+        UPDATE products
+        SET
+            product_name = #{productName},
+            description = #{description},
+            price = #{price},
+            p_condition = #{pCondition},
+            category_id = #{categoryId},
+            image_path = #{imagePath}
+        WHERE product_id = #{productId}
+
+    </update>
+
+
+    <!--
+        商品を削除
+    -->
+    <delete id="delete"
+            parameterType="long">
+
+        DELETE FROM products
+        WHERE product_id = #{productId}
+
+    </delete>
+
+
+    <!--
+        商品ステータスを変更
+        OPEN
+        LOCKED
+        CLOSED
+    -->
+    <update id="updateStatus">
+
+        UPDATE products
+        SET
+            status = #{status}
+        WHERE product_id = #{productId}
+
+    </update>
+
+
+    <!--
+        商品の購入者を設定
+    -->
+    <update id="updatePurchaser">
+
+        UPDATE products
+        SET
+            purchaser_id = #{purchaserId}
+        WHERE product_id = #{productId}
+
+    </update>
+
+
+    <!--
+        商品を購入者設定と同時にLOCKEDに変更
+        購入処理で使用
+
+        WHERE status = 'OPEN' にすることで、
+        すでに他のユーザーが購入した商品を
+        再度購入できないようにする
+    -->
+    <update id="lockProduct">
+
+        UPDATE products
+        SET
+            purchaser_id = #{purchaserId},
+            status = 'LOCKED'
+        WHERE product_id = #{productId}
+          AND status = 'OPEN'
+          AND is_banned = FALSE
+
+    </update>
+
+
+    <!--
+        IDを指定して商品を削除
+    -->
+    <delete id="deleteById">
+
+        DELETE FROM products
+        WHERE product_id = #{productId}
+
+    </delete>
+
+
+    <!--
+        出品者IDから自分の出品商品を取得
+    -->
+    <select id="findBySellerId"
+            resultMap="ProductResultMap">
+
+        SELECT
+            product_id,
+            seller_id,
+            purchaser_id,
+            product_name,
+            description,
+            price,
+            p_condition,
+            category_id,
+            status,
+            image_path,
+            is_banned,
+            created_at,
+            updated_at
+        FROM products
+        WHERE seller_id = #{sellerId}
+        ORDER BY created_at DESC
+
+    </select>
+
+
+    <!--
+        購入者IDから購入商品を取得
+    -->
+    <select id="findByPurchaserId"
+            resultMap="ProductResultMap">
+
+        SELECT
+            product_id,
+            seller_id,
+            purchaser_id,
+            product_name,
+            description,
+            price,
+            p_condition,
+            category_id,
+            status,
+            image_path,
+            is_banned,
+            created_at,
+            updated_at
+        FROM products
+        WHERE purchaser_id = #{purchaserId}
+        ORDER BY created_at DESC
+
+    </select>
+
+
+    <!--
+        商品ステータスを指定して検索
+        管理者画面で使用
+    -->
+    <select id="findByStatus"
+            resultMap="ProductResultMap">
+
+        SELECT
+            product_id,
+            seller_id,
+            purchaser_id,
+            product_name,
+            description,
+            price,
+            p_condition,
+            category_id,
+            status,
+            image_path,
+            is_banned,
+            created_at,
+            updated_at
+        FROM products
+        WHERE status = #{status}
+        ORDER BY created_at DESC
+
+    </select>
+
+
+    <!--
+        管理者が商品を禁止にする
+    -->
+    <update id="banProduct">
+
+        UPDATE products
+        SET
+            is_banned = TRUE
+        WHERE product_id = #{productId}
+
+    </update>
+
+
+    <!--
+        管理者が禁止を解除する
+    -->
+    <update id="unbanProduct">
+
+        UPDATE products
+        SET
+            is_banned = FALSE
+        WHERE product_id = #{productId}
+
+    </update>
+
+</mapper>

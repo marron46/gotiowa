@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.campustrade.mapper.CategoryMapper">
+
+    <!--
+        categoriesテーブルのカラムと
+        Categoryクラスのフィールドを対応付ける
+    -->
+    <resultMap id="CategoryResultMap"
+               type="com.example.campustrade.entity.Category">
+
+        <id property="categoryId"
+            column="category_id"/>
+
+        <result property="categoryName"
+                column="category_name"/>
+
+    </resultMap>
+
+
+    <!--
+        すべてのカテゴリを取得
+        商品検索画面のカテゴリ選択などで使用
+    -->
+    <select id="findAll"
+            resultMap="CategoryResultMap">
+
+        SELECT
+            category_id,
+            category_name
+        FROM categories
+        ORDER BY category_id ASC
+
+    </select>
+
+
+    <!--
+        カテゴリIDからカテゴリを取得
+    -->
+    <select id="findById"
+            resultMap="CategoryResultMap">
+
+        SELECT
+            category_id,
+            category_name
+        FROM categories
+        WHERE category_id = #{categoryId}
+
+    </select>
+
+
+    <!--
+        カテゴリを新規登録
+        管理者機能で使用
+    -->
+    <insert id="insert"
+            parameterType="com.example.campustrade.entity.Category"
+            useGeneratedKeys="true"
+            keyProperty="categoryId"
+            keyColumn="category_id">
+
+        INSERT INTO categories (
+            category_name
+        )
+        VALUES (
+            #{categoryName}
+        )
+
+    </insert>
+
+
+    <!--
+        カテゴリ名を更新
+        管理者機能で使用
+    -->
+    <update id="update"
+            parameterType="com.example.campustrade.entity.Category">
+
+        UPDATE categories
+        SET
+            category_name = #{categoryName}
+        WHERE category_id = #{categoryId}
+
+    </update>
+
+
+    <!--
+        カテゴリを削除
+        管理者機能で使用
+    -->
+    <delete id="delete">
+
+        DELETE FROM categories
+        WHERE category_id = #{categoryId}
+
+    </delete>
+
+</mapper>

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.campustrade.mapper.UserMapper">
+
+    <!--
+        usersテーブルのカラムと
+        Userクラスのフィールドを対応付ける
+    -->
+    <resultMap id="UserResultMap"
+               type="com.example.campustrade.entity.User">
+
+        <id property="userId"
+            column="user_id"/>
+
+        <result property="studentNumber"
+                column="student_number"/>
+
+        <result property="password"
+                column="password"/>
+
+        <result property="nickname"
+                column="nickname"/>
+
+        <result property="role"
+                column="role"/>
+
+    </resultMap>
+
+
+    <!--
+        学生番号からユーザーを検索
+        Spring Securityのログイン処理で使用
+    -->
+    <select id="findByStudentNumber"
+            resultMap="UserResultMap">
+
+        SELECT
+            user_id,
+            student_number,
+            password,
+            nickname,
+            role
+        FROM users
+        WHERE student_number = #{studentNumber}
+
+    </select>
+
+
+    <!--
+        ユーザーIDからユーザーを検索
+    -->
+    <select id="findById"
+            resultMap="UserResultMap">
+
+        SELECT
+            user_id,
+            student_number,
+            password,
+            nickname,
+            role
+        FROM users
+        WHERE user_id = #{userId}
+
+    </select>
+
+
+    <!--
+        学生番号がすでに登録されているか確認
+    -->
+    <select id="countByStudentNumber"
+            resultType="int">
+
+        SELECT COUNT(*)
+        FROM users
+        WHERE student_number = #{studentNumber}
+
+    </select>
+
+
+    <!--
+        新規ユーザー登録
+    -->
+    <insert id="insert"
+            parameterType="com.example.campustrade.entity.User"
+            useGeneratedKeys="true"
+            keyProperty="userId"
+            keyColumn="user_id">
+
+        INSERT INTO users (
+            student_number,
+            password,
+            nickname,
+            role
+        )
+        VALUES (
+            #{studentNumber},
+            #{password},
+            #{nickname},
+            #{role}
+        )
+
+    </insert>
+
+
+    <!--
+        ユーザー情報更新
+    -->
+    <update id="update"
+            parameterType="com.example.campustrade.entity.User">
+
+        UPDATE users
+        SET
+            password = #{password},
+            nickname = #{nickname},
+            role = #{role}
+        WHERE user_id = #{userId}
+
+    </update>
+
+</mapper>
